@@ -2,9 +2,10 @@
 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { useContext, useState } from "react";
 import { TaskContext } from "@/context/TaskContext";
+import { api } from "@/api/api";
 
 export const CreateTask = () => {
 
@@ -13,14 +14,21 @@ export const CreateTask = () => {
     const [inputTask, setInputTask] = useState('')
     const [selectTask, setSelectTask] = useState('')
 
-    const handleAdd = () => {
+    const handleAdd = async (inputTask: string, selectTask: string) => {
         if (!inputTask || inputTask.trim() === '' || !selectTask) return false
+
+        console.log('Aqui')
+
+        const response = await api.post('/task', { title: inputTask, category: selectTask })
+
+        console.log('Aqui')
 
         taskCtx?.addTask(inputTask, selectTask)
 
+        console.log('Aqui')
+
         setInputTask('')
         setSelectTask('')
-
     }
 
     return (
@@ -39,7 +47,7 @@ export const CreateTask = () => {
                     </SelectGroup>
                 </SelectContent>
             </Select>
-            <Button className="w-40 h-8 bg-blue-500" onClick={handleAdd}>Criar</Button>
+            <Button className="w-40 h-8 bg-blue-500" onClick={() => handleAdd(inputTask, selectTask)}>Criar</Button>
         </div>
     )
 }

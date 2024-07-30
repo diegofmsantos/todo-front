@@ -20,7 +20,12 @@ type DeleteTask = {
     payload: { id: number }
 }
 
-type TaskActions = AddTask | EditTask | DoneTask | DeleteTask
+type LoadTasks = {
+    type: 'load',
+    payload: Task[]
+}
+
+type TaskActions = AddTask | EditTask | DoneTask | DeleteTask | LoadTasks 
 
 export const taskReducer = (task: Task[], action: TaskActions) => {
     switch (action.type) {
@@ -48,6 +53,8 @@ export const taskReducer = (task: Task[], action: TaskActions) => {
             })
         case 'delete':
             return task.filter(t => t.id !== action.payload.id)
+        case 'load': 
+            return action.payload
         default:
             return task
     }

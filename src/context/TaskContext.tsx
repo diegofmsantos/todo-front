@@ -1,6 +1,6 @@
 import { taskReducer } from "@/reducer/taskReducer";
 import { Task } from "@/types/Task";
-import { createContext, ReactNode, useEffect, useReducer } from "react";
+import { createContext, ReactNode, useReducer } from "react";
 
 type TaskContextType = {
     tasks: Task[]
@@ -8,20 +8,13 @@ type TaskContextType = {
     editTask: (id: number, newTitle: string, newCategory: string) => void
     doneTask: (id: number) => void
     deleteTask: (id: number) => void
+    loadTasks: (tasks: Task[]) => void
 }
 
 export const TaskContext = createContext<TaskContextType | null>(null)
 
 export const TaskProvider = ({ children }: { children: ReactNode }) => {
-
-    const [tasks, dispatch] = useReducer(taskReducer, [], () => {
-        const localData = localStorage.getItem('tasks')
-        return localData ? JSON.parse(localData) : []
-    })
-
-    useEffect(() => {
-        localStorage.setItem('tasks', JSON.stringify(tasks))
-    }, [tasks])
+    const [tasks, dispatch] = useReducer(taskReducer, [])
 
     const addTask = (title: string, category: string) => {
         dispatch({
@@ -51,8 +44,15 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
         })
     }
 
+    const loadTasks = (tasks: Task[]) => {
+        dispatch({
+            type: 'load',
+            payload: tasks
+        })
+    }
+
     return (
-        <TaskContext.Provider value={{ tasks, addTask, editTask, doneTask, deleteTask }}>
+        <TaskContext.Provider value={{ tasks, addTask, editTask, doneTask, deleteTask, loadTasks }}>
             {children}
         </TaskContext.Provider>
     )

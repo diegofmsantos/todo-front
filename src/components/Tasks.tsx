@@ -1,11 +1,12 @@
 "use client"
 
 import { TaskContext } from "@/context/TaskContext"
-import { useContext, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { Button } from "./ui/button"
 import { SearchTask } from "./SearchTask"
 import { Separator } from "./ui/separator"
 import { FilterTask } from "./FilterTask"
+import { api } from "@/api/api"
 
 export const Tasks = () => {
     const taskCtx = useContext(TaskContext)
@@ -13,26 +14,58 @@ export const Tasks = () => {
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState('Todas')
 
-    const handleDone = (id: number) => {
-        taskCtx?.doneTask(id)
-    }
+    useEffect(() => {
+        const loadTasks = async () => {
+            try {
+                const response = await api.get('/tasks')
+                const tasks = response.data.result
+                taskCtx?.loadTasks(tasks)
+            } catch (error) {
+                console.error('Erro na atualização das tarefas:', error)
+            }
+        }
 
-    const handleEdit = (id: number) => {
-        const item = taskCtx?.tasks.find(it => it.id === id)
-        if (!item) return false
+        loadTasks();
+    }, [taskCtx?.tasks]);
 
-        const newTitle = window.prompt('Editar Título da Tarefa', item.title)
-        if (!newTitle || newTitle.trim() === '') return false
+    const handleDone = async (id: number) => {
+        try {
+            const response = await api.put(`/taskdone/${id}`);
+            taskCtx?.doneTask(id);
+        } catch (error) {
+            console.log('Erro na conclusão da tarefa:', error);
+        }
+    };
 
-        const newCategory = window.prompt('Editar Categoria da Tarefa', item.category)
-        if (!newCategory || newCategory.trim() === '') return false
+    const handleEdit = async (id: number) => {
+        const item = taskCtx?.tasks.find(it => it.id === id);
+        if (!item) return false;
 
-        taskCtx?.editTask(id, newTitle, newCategory)
-    }
+        const newTitle = window.prompt('Editar Título da Tarefa', item.title);
+        if (!newTitle || newTitle.trim() === '') return false;
 
-    const handleDelete = (id: number) => {
-        taskCtx?.deleteTask(id)
-    }
+        const newCategory = window.prompt('Editar Categoria da Tarefa', item.category);
+        if (!newCategory || newCategory.trim() === '') return false;
+
+        try {
+            await api.put(`/task/${id}`, {
+                newTitle,
+                newCategory
+            });
+            taskCtx?.editTask(id, newTitle, newCategory);
+        } catch (error) {
+            console.error('Erro ao editar tarefa:', error);
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        try {
+            const response = await api.delete(`/task/${id}`);
+            taskCtx?.deleteTask(id);
+        } catch (error) {
+            console.error('Erro na exclusão da tarefa:', error);
+        }
+    };
 
     return (
         <div>
@@ -42,11 +75,11 @@ export const Tasks = () => {
             <Separator />
             <div className="flex flex-col gap-2">
                 {taskCtx?.tasks
-                .filter((tasks) => filter === "Todas" ? true : filter === "Completas" ? tasks.done : !tasks.done)
+                    .filter((tasks) => filter === "Todas" ? true : filter === "Completas" ? tasks.done : !tasks.done)
                     .filter((tasks) =>
                         tasks.title.toLocaleLowerCase().includes(search.toLocaleLowerCase())).map(task => (
                             <div key={task.id} className="flex-col flex justify-between items-center gap-4 bg-white w-full rounded-md p-2 my-2 mt-5 md:my-0 md:mt-0 h-28 md:flex-row md:h-20">
-                                <div className="flex flex-1 flex-col items-start">
+                                <div className="flex flex-2 flex-col items-start">
                                     <div className="m-1" style={{ textDecoration: task.done ? 'line-through' : 'none' }}>{task.title}</div>
                                     <div className="m-auto md:m-1" style={{ textDecoration: task.done ? 'line-through' : 'none' }}>({task.category})</div>
                                 </div>
